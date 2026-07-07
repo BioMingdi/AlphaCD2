@@ -278,13 +278,7 @@ The output contains predicted cytidine deaminase activity scores for the sequenc
 Expected output format:
 
 ```text
-sequence_name    predicted_activity
-```
-
-or, depending on the script version:
-
-```text
-sequence_name    protein_sequence    predicted_activity
+sequence_name    predicted_activity  protein_sequence
 ```
 
 Minor numerical differences may occur across different operating systems, PyTorch versions, CUDA versions, or CPU/GPU settings.
