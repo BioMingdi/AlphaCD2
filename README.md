@@ -482,7 +482,7 @@ Wu M. et al. De novo designed cytidine deaminases enable in vivo base editing of
 This project is distributed under the license provided in:
 
 ```text
-LICENSE
+MIT LICENSE
 ```
 
 ---
