@@ -102,9 +102,7 @@ AlphaCD2 has been tested on Linux operating systems.
 Tested systems include:
 
 ```text
-Ubuntu 20.04 LTS
 Ubuntu 22.04 LTS
-CentOS 7
 ```
 
 The demo prediction is expected to run on most Linux systems with a working Conda installation.
@@ -244,19 +242,6 @@ bash AlphaCD2_predicting.sh
 
 This script runs AlphaCD2 activity prediction on the demo dataset.
 
-Alternatively, the Python script can be run directly:
-
-```bash
-python AlphaCD2_predicting.py
-```
-
-If your local version of `AlphaCD2_predicting.py` requires explicit input and output arguments, run:
-
-```bash
-python AlphaCD2_predicting.py \
-    --input test.txt \
-    --output test_efficiency_pre.txt
-```
 
 ## Demo input
 
@@ -349,20 +334,6 @@ Example:
 my_CD_001    MXXX...
 my_CD_002    MXXX...
 my_CD_003    MXXX...
-```
-
-Then run:
-
-```bash
-python AlphaCD2_predicting.py \
-    --input my_sequences.txt \
-    --output my_predictions.txt
-```
-
-If using the provided shell script, modify the input and output filenames in:
-
-```text
-AlphaCD2_predicting.sh
 ```
 
 Then run:
@@ -469,13 +440,6 @@ my_sequences.txt
 
 ### Step 2: Run activity prediction
 
-```bash
-python AlphaCD2_predicting.py \
-    --input my_sequences.txt \
-    --output my_predictions.txt
-```
-
-Alternatively, modify `AlphaCD2_predicting.sh` and run:
 
 ```bash
 bash AlphaCD2_predicting.sh
@@ -514,7 +478,7 @@ The workflow is based on protein sequence representation, activity prediction, P
 If you use AlphaCD2, please cite:
 
 ```text
-Wu M. et al. One-shot generation of cytidine deaminases using large language models without structural information.
+Wu M. et al. De novo designed cytidine deaminases enable in vivo base editing of Pcsk9 .
 ```
 
 ---
@@ -534,5 +498,5 @@ LICENSE
 For questions, please contact:
 
 ```text
-Mingdi Wu
+mingdiwu0228@163.com
 ```
