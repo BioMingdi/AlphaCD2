@@ -1,2 +1,1 @@
-CUDA_VISIBLE_DEVICES=3 \
-python AlphaCD2_predicting.py --input test.txt --model /mnt/ZuoStorage3/wumingdi/Project/06.Wumingdi/06.CreatApobec/04.esm/11.training_final/improved_model/ensemble_model.pth --scaler /mnt/ZuoStorage3/wumingdi/Project/06.Wumingdi/06.CreatApobec/04.esm/11.training_final/improved_model/scaler.pkl --esm_weights /mnt/ZuoStorage3/wumingdi/Soft/esm/esmc_600m/esmc_600m_2024_12_v0.pth --output test_efficiency_pre.txt --use_gpu false
+python AlphaCD2_predicting.py --input test.txt --model $path/ensemble_model.pth --scaler $path/scaler.pkl --esm_weights $path/esmc_600m_2024_12_v0.pth --output test_efficiency_pre.txt --use_gpu false
