@@ -2,8 +2,6 @@
 """
 Predict on-target efficiency and specificity from a two-column TXT file.
 
-On-target inference uses predict_final_bilstm_txt.py and its seed checkpoints.
-The same ESM-C features are passed to the A1 specificity model.
 """
 
 from __future__ import annotations
