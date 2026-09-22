@@ -356,13 +356,13 @@ def build_parser():
         "--ontarget-script",
         type=Path,
         required=True,
-        help="Path to predict_final_bilstm_txt.py.",
+        help="Path to AlphaCD2_ontarget.py.",
     )
     ap.add_argument(
         "--manifest",
         type=Path,
         required=True,
-        help="Path to final_bilstm_manifest.json.",
+        help="Path to bilstm_manifest.json.",
     )
     ap.add_argument(
         "--esm-checkpoint",
