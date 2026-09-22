@@ -1,6 +1,5 @@
 {
   "manifest_version": 3,
-  "model_family": "AlphaCD2 legacy BiLSTM activity predictor",
   "model_mode": "bilstm",
   "n_training_records": 1380,
   "selected_final_epochs": 103,
@@ -28,6 +27,5 @@
       "max_value": 0.8754264116287231
     }
   ],
-  "prediction_rule": "Mean of all full-data seed predictions; uncertainty is the between-seed standard deviation.",
-  "preprocessing": "legacy embedding.flatten()[:1152] compatible"
+  "prediction_rule": "Mean of all full-data seed predictions; uncertainty is the between-seed standard deviation."
 }
