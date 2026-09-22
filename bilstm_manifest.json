@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "model_family": "AlphaCD2 legacy BiLSTM activity predictor",
+  "model_mode": "bilstm",
+  "data_pickle": "/mnt/ZuoStorage3/wumingdi/Project/06.Wumingdi/06.CreatApobec/04.esm/01.embedding/apobec_embeddings_latest.pkl",
+  "n_training_records": 1380,
+  "selected_final_epochs": 103,
+  "epoch_selection_source": "median best epoch from random five-fold validation",
+  "models": [
+    {
+      "seed": 42,
+      "checkpoint": "seed_42/bilstm_checkpoint.pt",
+      "scaler": "seed_42/scaler.pkl",
+      "epochs": 103,
+      "max_value": 0.8754264116287231
+    },
+    {
+      "seed": 43,
+      "checkpoint": "seed_43/bilstm_checkpoint.pt",
+      "scaler": "seed_43/scaler.pkl",
+      "epochs": 103,
+      "max_value": 0.8754264116287231
+    },
+    {
+      "seed": 44,
+      "checkpoint": "seed_44/bilstm_checkpoint.pt",
+      "scaler": "seed_44/scaler.pkl",
+      "epochs": 103,
+      "max_value": 0.8754264116287231
+    }
+  ],
+  "prediction_rule": "Mean of all full-data seed predictions; uncertainty is the between-seed standard deviation.",
+  "preprocessing": "legacy embedding.flatten()[:1152] compatible"
+}
