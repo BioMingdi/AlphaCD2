@@ -2,7 +2,6 @@
   "manifest_version": 3,
   "model_family": "AlphaCD2 legacy BiLSTM activity predictor",
   "model_mode": "bilstm",
-  "data_pickle": "/mnt/ZuoStorage3/wumingdi/Project/06.Wumingdi/06.CreatApobec/04.esm/01.embedding/apobec_embeddings_latest.pkl",
   "n_training_records": 1380,
   "selected_final_epochs": 103,
   "epoch_selection_source": "median best epoch from random five-fold validation",
