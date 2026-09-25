@@ -10,7 +10,7 @@ python "${PROGEN2_DIR}/src/finetune.py" \
     --train_file="${TRAIN_FILE}" \
     --test_file="${TEST_FILE}" \
     --device=cuda \
-    --epochs=10 \
+    --epochs=5 \
     --batch_size=2 \
     --accumulation_steps=4 \
     --lr=1e-4 \
