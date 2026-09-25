@@ -552,7 +552,7 @@ hugohrban/progen2-base
 using:
 
 ```text
-epochs               = 10
+epochs               = 5
 batch size            = 2
 gradient accumulation = 4
 learning rate         = 1e-4
