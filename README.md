@@ -16,80 +16,13 @@ The framework can also be combined with protein language models such as **ProGen
 
 ## Overview
 
-The AlphaCD2 prediction workflow is:
+AlphaCD2 encodes protein sequences with ESM-C 600M and uses the resulting representations for activity and auxiliary-property prediction. The activity score is averaged across three BiLSTM models trained with different random seeds.
 
-```text
-Protein sequence
-      |
-      v
-ESM-C 600M representation
-      |
-      +----------------------> BiLSTM activity predictor
-      |                                 |
-      |                                 v
-      |                       On-target activity
-      |
-      +----------------------> Auxiliary predictor
-                                        |
-                                        +-- Motif preference
-                                        +-- Editing window
-                                        +-- sgRNA-independent off-target activity
-```
-
-For protein-design applications, AlphaCD2 can be incorporated into a language-model-guided workflow:
-
-```text
-CD sequence dataset
-        |
-        v
-Protein language-model fine-tuning
-        |
-        v
-Generated CD variants
-        |
-        v
-AlphaCD2 prediction
-        |
-        v
-Candidate prioritization
-        |
-        v
-Experimental validation
-```
+For protein-design applications, ProGen2-generated candidates can be scored with AlphaCD2 and prioritized for experimental validation.
 
 ---
 
 ## Repository contents
-
-```text
-AlphaCD2/
-├── AlphaCD2_predict.py
-├── AlphaCD2_ontarget.py
-├── alphacd2_seed42_model.py
-├── bilstm_manifest.json
-│
-├── seed_42/
-│   ├── bilstm_checkpoint.pt
-│   └── scaler.pkl
-├── seed_43/
-│   ├── bilstm_checkpoint.pt
-│   └── scaler.pkl
-├── seed_44/
-│   ├── bilstm_checkpoint.pt
-│   └── scaler.pkl
-│
-├── auxiliary_metrics.pt
-├── auxiliary_metrics.input_scaler.pkl
-│
-├── AlphaCD2_predict.sh
-├── AlphaCD2_generation_data_preparing.sh
-├── AlphaCD2_generation_Progen2_finetuning.sh
-│
-├── environment.yml
-├── test.txt
-├── LICENSE
-└── README.md
-```
 
 ### Main files
 
@@ -97,6 +30,8 @@ AlphaCD2/
 | ------------------------------------------- | ----------------------------------------------------------------------- |
 | `AlphaCD2_predict.py`                       | Unified AlphaCD2 prediction pipeline                                    |
 | `AlphaCD2_ontarget.py`                      | ESM-C embedding generation and BiLSTM on-target prediction              |
+| `embedding.py` | Generate ESM-C embeddings from a labelled training dataset |
+| `AlphaCD2_activity_train.py` | Select training duration and train the final BiLSTM activity models |
 | `alphacd2_seed42_model.py`                  | Model definitions required for loading the released AlphaCD2 predictors |
 | `bilstm_manifest.json`                      | Configuration of the released full-data BiLSTM models                   |
 | `seed_42/`, `seed_43/`, `seed_44/`          | Pretrained BiLSTM checkpoints and preprocessing scalers                 |
@@ -481,6 +416,114 @@ The program checks whether the requested CUDA device exists before prediction.
 
 ---
 
+# Training the activity predictor
+
+The following steps train the BiLSTM on-target activity predictor from a labelled protein dataset. Run the commands from the repository root, with `alphacd2_seed42_model.py` available alongside `AlphaCD2_activity_train.py`.
+
+## 1. Prepare the training data
+
+Create a **tab-separated file without a header** containing three columns:
+
+| Column | Content |
+| --- | --- |
+| 1 | Unique protein identifier |
+| 2 | Complete amino-acid sequence |
+| 3 | Experimentally measured editing efficiency |
+
+Use editing efficiencies on the same scale as the original training labels. For fractional labels, 25% editing is stored as `0.25`. Neither script automatically converts percentage values to fractions. Keep the scale consistent throughout training and prediction.
+
+Use unique identifiers and check for duplicate sequences before training. The two-column inference demo `test.txt` does not contain the activity labels required for this step.
+
+## 2. Generate ESM-C embeddings
+
+The standalone `embedding.py` script uses ESM-C 600M and reads its input and output paths from the final block of the script:
+
+```python
+input_file = "train_noCR.txt"
+output_file = "apobec_embeddings_noCR.pkl"
+```
+
+Edit these paths if needed. Place `esmc_600m_2024_12_v0.pth` in the repository root or at `data/weights/esmc_600m_2024_12_v0.pth`. If the checkpoint is in the root and the expected weights path does not exist, the script creates a symbolic link to it.
+
+Run:
+
+```bash
+python embedding.py
+```
+
+This standalone script currently sets its device in `setup_model()`:
+
+```python
+device = torch.device("cpu")
+```
+
+To use a CUDA GPU, change that line to the appropriate device, for example `torch.device("cuda:0")`. Unlike the unified inference pipeline, this script does not accept `--esm-device` or `--esm-checkpoint` arguments.
+
+The output pickle maps each protein identifier to its sequence, embedding tensor and experimental efficiency. The script saves the returned ESM-C embedding tensor directly, without mean pooling. It reports failed sequences and skips them; check the final counts before training.
+
+## 3. Train the final BiLSTM models
+
+```bash
+python AlphaCD2_activity_train.py \
+    --data-pickle apobec_embeddings_noCR.pkl \
+    --out-dir activity_training \
+    --device cuda:0 \
+    --final-seeds 42 43 44
+```
+
+For CPU training, use `--device cpu`.
+
+By default, the script uses random five-fold validation to select the training duration. It records the best epoch in each fold, takes their median, and trains three new models on the complete dataset with seeds 42, 43 and 44.
+
+The five-fold stage is used for **epoch selection**, not independent performance estimation. Its best validation scores should not be reported as nested out-of-fold test performance. This script does not implement the separate nested cross-validation evaluation used to assess generalization.
+
+Before model fitting, each saved embedding is flattened and truncated to 1,152 elements, or zero-padded if shorter. Features are standardized using the corresponding training data. This preprocessing does not perform mean pooling over residues.
+
+Default settings:
+
+| Parameter | Default |
+| --- | --- |
+| Input dimension | 1,152 |
+| Epoch-selection folds | 5 |
+| Maximum epoch-selection epochs | 300 |
+| Early-stopping patience | 30 |
+| Training batch size | 32 |
+| Optimizer | AdamW |
+| Maximum learning rate | 5e-4 |
+| Weight decay | 1e-5 |
+| Learning-rate schedule | OneCycleLR |
+| Dropout | 0.30 |
+| BiLSTM hidden dimension | 256 |
+| BiLSTM layers | 2 |
+| Final training seeds | 42, 43, 44 |
+
+To use a predetermined training duration and skip epoch selection, pass a positive `--final-epochs` value. For example, `--final-epochs 100` trains each final model for 100 epochs; this is an example, not a reported training duration for the released checkpoints.
+
+For all options:
+
+```bash
+python AlphaCD2_activity_train.py --help
+```
+
+## 4. Training outputs
+
+The output directory contains:
+
+| Path | Content |
+| --- | --- |
+| `dataset_summary.json` | Record counts, embedding shapes, label summary and skipped records |
+| `epoch_selection_fold*.tsv` | Per-fold training and validation histories, when epoch selection is run |
+| `epoch_selection_fold_assignments.tsv` | Dataset row indices and their validation-fold assignments |
+| `epoch_selection.json` | Fold-specific best epochs and selected final duration |
+| `seed_42/`, `seed_43/`, `seed_44/` | Final checkpoint, scaler, training history and training records for each seed |
+| `final_bilstm_manifest.json` | Paths and metadata for the newly trained activity models |
+
+Each seed directory contains `bilstm_checkpoint.pt`, `scaler.pkl`, `training_history.tsv` and `training_records.tsv`. Keep the manifest and seed directories together because model paths in the manifest are relative to its directory.
+
+The newly generated `final_bilstm_manifest.json` is separate from the repository's released `bilstm_manifest.json`. These training steps train only the activity predictor; they do not retrain the motif, editing-window or off-target model.
+
+---
+
 # ProGen2 workflow
 
 AlphaCD2 can be combined with **ProGen2** for language-model-guided generation of cytidine deaminase variants.
@@ -579,9 +622,10 @@ The motif, editing-window, and sgRNA-independent off-target predictors are inten
 
 # Code availability
 
-This repository provides the source code and pretrained models required for **AlphaCD2 inference**, including:
+This repository provides AlphaCD2 inference code, pretrained models and final activity-model training code, including:
 
-* ESM-C representation generation;
+* ESM-C representation generation for inference and labelled training data;
+* final BiLSTM activity-model training with epoch selection and multiple random seeds;
 * BiLSTM-based on-target activity prediction;
 * motif-preference prediction;
 * editing-window prediction;
@@ -589,7 +633,7 @@ This repository provides the source code and pretrained models required for **Al
 * pretrained AlphaCD2 checkpoints and preprocessing scalers; and
 * scripts for ProGen2 data preparation and fine-tuning.
 
-The training code used to train the AlphaCD2 prediction models is **not included** in this repository.
+The activity-training workflow is provided in `embedding.py` and `AlphaCD2_activity_train.py`. These scripts cover embedding extraction and final activity-model fitting. They do not include auxiliary-model training or the complete nested cross-validation benchmarking workflow.
 
 The released pretrained model checkpoints are sufficient for applying AlphaCD2 to new protein sequences.
 
