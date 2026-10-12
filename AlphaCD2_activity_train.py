@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Train AlphaCD2 BiLSTM models and save checkpoints for inference."""
 
 from __future__ import annotations
 
